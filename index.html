@@ -1,0 +1,587 @@
+<!doctype html>
+<html class="no-js" lang="">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Voting App</title>
+  <meta name="description" content="A simple voting application">
+
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.png">
+
+  <link rel="manifest" href="site.webmanifest">
+  <meta name="theme-color" content="#fafafa">
+
+  <!-- Alpine.js -->
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <style>
+    :root {
+      --primary-color: #4a6cf7;
+      --secondary-color: #f5f5f5;
+      --danger-color: #ff4d4f;
+      --success-color: #52c41a;
+      --neutral-color: #d9d9d9;
+      --text-color: #333;
+      --light-text: #fff;
+      --border-radius: 8px;
+      --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      color: var(--text-color);
+      background-color: #f9f9f9;
+      line-height: 1.6;
+      padding-bottom: 70px; /* Space for fixed footer */
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      background-color: var(--primary-color);
+      color: var(--light-text);
+      padding: 15px 20px;
+      box-shadow: var(--shadow);
+      z-index: 10;
+    }
+
+    .group-title {
+      display: inline-block;
+      font-size: 1.5rem;
+      font-weight: bold;
+      border: none;
+      background: transparent;
+      color: var(--light-text);
+      width: 100%;
+      padding: 5px;
+      cursor: pointer;
+    }
+
+    .group-title:focus {
+      outline: 2px solid rgba(255, 255, 255, 0.5);
+      border-radius: var(--border-radius);
+    }
+
+    .voter-list {
+      margin-top: 20px;
+    }
+
+    .voter-item {
+      display: flex;
+      align-items: center;
+      background-color: white;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      position: relative;
+    }
+
+    .voter-info {
+      flex: 1;
+      display: flex;
+      align-items: center;
+    }
+
+    .voter-name, .voter-count {
+      border: none;
+      background: transparent;
+      padding: 5px;
+      margin-right: 10px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .voter-name {
+      font-weight: bold;
+      min-width: 120px;
+      font-size: 1.1rem; /* Increased font size for voter names */
+    }
+
+    .voter-count {
+      width: 50px;
+      text-align: center;
+    }
+
+    .voter-name:focus, .voter-count:focus {
+      outline: 2px solid var(--primary-color);
+      background-color: var(--secondary-color);
+    }
+
+    .delete-btn {
+      color: var(--danger-color);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.2rem;
+      margin-right: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .vote-options {
+      display: flex;
+      gap: 5px;
+    }
+
+    .vote-option {
+      border: none;
+      padding: 8px 12px;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.2s;
+    }
+
+    .vote-option.yeah {
+      background-color: var(--success-color);
+      color: var(--light-text);
+    }
+
+    .vote-option.nay {
+      background-color: var(--danger-color);
+      color: var(--light-text);
+    }
+
+    .vote-option.present {
+      background-color: var(--neutral-color);
+      color: var(--text-color);
+    }
+
+    .vote-option.inactive {
+      opacity: 0.5;
+    }
+
+    .add-voter {
+      display: block;
+      width: 100%;
+      padding: 15px;
+      margin-top: 20px;
+      background-color: var(--primary-color);
+      color: var(--light-text);
+      border: none;
+      border-radius: var(--border-radius);
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+    }
+
+    .totals {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: white;
+      padding: 15px 20px;
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+    }
+
+    .total-item {
+      text-align: center;
+    }
+
+    .total-label {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .total-value {
+      font-size: 1.5rem;
+    }
+
+    .total-item.yeah .total-value {
+      color: var(--success-color);
+    }
+
+    .total-item.nay .total-value {
+      color: var(--danger-color);
+    }
+
+    .total-item.present .total-value {
+      color: var(--text-color);
+    }
+
+    @media (max-width: 600px) {
+      .voter-item {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .voter-info {
+        margin-bottom: 10px;
+        width: 100%;
+      }
+
+      .vote-options {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .vote-option {
+        flex: 1;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div x-data="votingApp()" x-init="initApp()">
+    <header>
+      <div style="display: flex; align-items: center; position: relative;">
+        <input
+          type="text"
+          class="group-title"
+          x-model="groupTitle"
+          @keydown.enter="updateGroupTitle()"
+          @blur="updateGroupTitle()"
+          @click="if(!editMode) editMode = true"
+          placeholder="Enter Group Title"
+          style="width: 100%; padding: 5px; margin-right: 0px;"
+          :style="editMode ? 'outline: 2px solid rgba(255, 255, 255, 0.5); border-radius: var(--border-radius); width: 100%; padding: 5px; margin-right: -120px;' : 'width: 100%; padding: 5px; margin-right: 0px;'"
+        />
+
+        <button
+          @click="generateShareLink()"
+          title="Share Configuration"
+          style="background: none; display:none; border: none; color: white; cursor: pointer; font-size: 1.2rem; padding: 5px; position: relative; z-index: 20; min-width: 60px;"
+          x-show="editMode && voters.length > 0"
+        >
+
+          <span style="color: white; display: inline-block; width: 16px; height: 16px; border-radius: 2px; position: relative; top: 2px;">
+            <svg fill="#fff" height="20px" width="20px" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+                 viewBox="0 0 212.045 212.045" xml:space="preserve">
+            <path d="M167.871,0H44.84C34.82,0,26.022,8.243,26.022,18v182c0,3.266,0.909,5.988,2.374,8.091c1.752,2.514,4.573,3.955,7.598,3.954
+              c2.86,0,5.905-1.273,8.717-3.675l55.044-46.735c1.7-1.452,4.142-2.284,6.681-2.284c2.538,0,4.975,0.832,6.68,2.288l54.86,46.724
+              c2.822,2.409,5.657,3.683,8.512,3.683c4.828,0,9.534-3.724,9.534-12.045V18C186.022,8.243,177.891,0,167.871,0z"/>
+            </svg>
+          </span>
+        </button>
+
+        <button
+          @click="toggleEditMode()"
+          title="Toggle Edit Mode"
+          style="background: none; border: none; color: white; cursor: pointer; font-size: 1.2rem; padding: 5px; position: relative; z-index: 20; min-width: 60px; margin-left:-10px; margin-right: 10px;"
+          x-show="!editMode || (editMode && voters.length > 0)"
+        >
+          <span style="color: white;" x-text="editMode ? '  SAVE  ' : '✎'"></span>
+        </button>
+
+      </div>
+    </header>
+
+    <div class="container">
+      <div class="voter-list">
+        <template x-for="(voter, index) in voters" :key="index">
+          <div class="voter-item">
+            <div class="voter-info">
+              <input
+                type="text"
+                class="voter-name"
+                x-model="voter.name"
+                @keydown.enter="$event.target.blur()"
+                @blur="saveData()"
+                placeholder="Voter name"
+                :readonly="!editMode"
+                :style="!editMode ? 'cursor: default;' : ''"
+              >
+              <input
+                type="number"
+                class="voter-count"
+                x-model.number="voter.count"
+                @keydown.enter="$event.target.blur()"
+                @blur="saveData()"
+                min="0"
+                :readonly="!editMode"
+                :style="!editMode ? 'cursor: default;' : ''"
+              >
+            </div>
+            <div class="vote-options">
+              <button
+                class="vote-option yeah"
+                :class="{ 'inactive': voter.vote !== 'yeah' }"
+                @click="setVote(index, 'yeah')"
+              >
+                Yeah
+              </button>
+              <button
+                class="vote-option present"
+                :class="{ 'inactive': voter.vote !== 'present' }"
+                @click="setVote(index, 'present')"
+              >
+                Present
+              </button>
+              <button
+                class="vote-option nay"
+                :class="{ 'inactive': voter.vote !== 'nay' }"
+                @click="setVote(index, 'nay')"
+              >
+                Nay
+              </button>
+            </div>
+            <button
+              class="delete-btn"
+              @click="removeVoter(index)"
+              title="Delete voter"
+              x-show="editMode"
+              style="position: absolute; right: -20px; top: -10px; background: var(--danger-color); border: 2px solid var(--danger-color); box-shadow: 0 0 0 2px white; border-radius: 50%; cursor: pointer; padding: 5px; height: 20px; width: 20px;"
+            >
+              <span style="padding-bottom:1px; color: white; font-size: 1.1rem;"> - </span>
+            </button>
+          </div>
+        </template>
+      </div>
+
+      <button class="add-voter" @click="addVoter()" x-show="editMode" style="display:none">+ Add Voter</button>
+
+      <!-- Tutorial text for empty voting groups -->
+      <div x-show="editMode && voters.length === 0" style="display:none; margin-top: 20px; color: #666; background-color: #f5f5f5; padding: 15px; border-radius: var(--border-radius);">
+        <h3>Voting App!</h3>
+        <div style="margin-bottom: 15px;">
+          <p>Welcome to the Voting App! This simple tool helps you manage and track votes for any group decision-making process. Whether you're conducting a homeowner association meeting, a club election, or any other voting scenario, this app makes it easy to record and tally votes in real-time.</p>
+        </div>
+        <h3>Getting Started with Voting Groups</h3>
+        <ul style="margin-left: 20px; margin-top: 10px;">
+          <li>Click <strong>+ Add Voter</strong> above to add participants to this voting group</li>
+          <li>Enter a name and the number of votes they represent</li>
+          <li>Use the colored buttons (Yeah, Present, Nay) to record each voter's position</li>
+          <li>Click the <strong>SAVE</strong> button in the header when you're done editing</li>
+          <li>The totals will be displayed at the bottom of the screen</li>
+          <li>You can return to edit mode anytime by clicking the pencil icon</li>
+        </ul>
+      </div>
+
+
+      <div
+        style="position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 -2px 10px rgba(0,0,0,0.1);"
+        x-show="editMode"
+      >
+        <small style="font-size: 0.66rem; color: #666; flex: 1; text-align: left; line-height: 1.1;">
+          This web app is free and will stay free!<br/>
+          If you enjoy using them, consider supporting me with a small donation.<br/>
+          Your support keeps these apps running and enables me to create more! <br/>
+        </small>
+        <a href="https://buymeacoffee.com/holzschneider" target="_blank"
+           style="display: inline-block; background-color: #FFDD00; color: #000000; padding: 8px 15px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-left: 20px; white-space: nowrap;">
+          <span style="margin-right: 5px;">☕</span> Buy me a coffee
+        </a>
+      </div>
+    </div>
+
+    <div class="totals" x-show="!editMode">
+    <div class="total-item yeah">
+        <div class="total-label">Yeah</div>
+        <div class="total-value" x-text="getTotalByVote('yeah')"></div>
+      </div>
+      <div class="total-item present">
+        <div class="total-label">Present</div>
+        <div class="total-value" x-text="getTotalByVote('present')"></div>
+      </div>
+      <div class="total-item nay">
+        <div class="total-label">Nay</div>
+        <div class="total-value" x-text="getTotalByVote('nay')"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function votingApp() {
+      return {
+        groupTitle: '',
+        voters: [],
+        editMode: true, // Start with edit mode enabled
+
+        initApp() {
+          // Get group from URL parameter
+          const urlParams = new URLSearchParams(window.location.search);
+          const groupParam = urlParams.get('group');
+          const configParam = urlParams.get('config');
+
+          // Check if there's a shared configuration in the URL
+          if (configParam) {
+            try {
+              // Decode the base64 configuration
+              const decodedConfig = JSON.parse(atob(configParam));
+
+              // Set the group title
+              if (decodedConfig.groupTitle) {
+                this.groupTitle = decodedConfig.groupTitle;
+              } else {
+                this.groupTitle = 'Shared Voting Group';
+              }
+
+              // Set the voters
+              if (decodedConfig.voters) {
+                this.voters = decodedConfig.voters;
+              }
+
+              // Save the configuration to localStorage
+              this.saveData();
+
+              // Update the URL to only contain the group parameter
+              const url = new URL(window.location);
+              url.searchParams.delete('config');
+              url.searchParams.set('group', encodeURIComponent(this.groupTitle));
+              window.history.pushState({}, '', url);
+
+              // Set edit mode to false
+              this.editMode = false;
+            } catch (e) {
+              console.error('Failed to parse shared configuration', e);
+              // Fall back to normal initialization
+              this.normalInit(groupParam);
+            }
+          } else {
+            // Normal initialization
+            this.normalInit(groupParam);
+          }
+        },
+
+        normalInit(groupParam) {
+          if (groupParam) {
+            this.groupTitle = decodeURIComponent(groupParam);
+            this.loadData();
+
+            // Check if voters are already configured before setting editMode
+            if (this.voters.length > 0) {
+              // If voters are already configured, default to edit disabled
+              this.editMode = false;
+            } else {
+              // If no voters are configured, default to edit enabled
+              this.editMode = true;
+            }
+          } else {
+            this.groupTitle = 'New Voting Group';
+            this.updateGroupTitle();
+            // If no voting group, default to edit enabled
+            this.editMode = true;
+          }
+        },
+
+        updateGroupTitle() {
+          // Update URL parameter
+          const url = new URL(window.location);
+          url.searchParams.set('group', encodeURIComponent(this.groupTitle));
+          window.history.pushState({}, '', url);
+
+          // Load data for this group
+          this.loadData();
+        },
+
+        addVoter() {
+          this.voters.push({
+            name: '',
+            count: 1,
+            vote: 'present' // Default vote
+          });
+          this.saveData();
+        },
+
+        removeVoter(index) {
+          this.voters.splice(index, 1);
+          this.saveData();
+        },
+
+        setVote(index, vote) {
+          this.voters[index].vote = vote;
+          this.saveData();
+        },
+
+        getTotalByVote(voteType) {
+          return this.voters
+            .filter(voter => voter.vote === voteType)
+            .reduce((sum, voter) => sum + (voter.count || 0), 0);
+        },
+
+        saveData() {
+          if (!this.groupTitle) return;
+
+          const storageKey = `voting-app-${encodeURIComponent(this.groupTitle)}`;
+          localStorage.setItem(storageKey, JSON.stringify(this.voters));
+        },
+
+        loadData() {
+          if (!this.groupTitle) return;
+
+          const storageKey = `voting-app-${encodeURIComponent(this.groupTitle)}`;
+          const savedData = localStorage.getItem(storageKey);
+
+          if (savedData) {
+            try {
+              this.voters = JSON.parse(savedData);
+            } catch (e) {
+              console.error('Failed to parse saved data', e);
+              this.voters = [];
+            }
+          } else {
+            // No saved data for this group
+            this.voters = [];
+          }
+        },
+
+        toggleEditMode() {
+          // If in edit mode, exit edit mode (Save button clicked)
+          // If not in edit mode, enter edit mode
+          if (this.editMode) {
+            this.editMode = false;
+          } else {
+            this.editMode = true;
+          }
+        },
+
+        generateShareLink() {
+          // Create a configuration object with the group title and voters
+          const config = {
+            groupTitle: this.groupTitle,
+            voters: this.voters
+          };
+
+          // Encode the configuration as a base64 string
+          const encodedConfig = btoa(JSON.stringify(config));
+
+          // Create a URL with the encoded configuration
+          const url = new URL(window.location);
+          url.searchParams.set('config', encodedConfig);
+
+          // Copy the URL to the clipboard
+          navigator.clipboard.writeText(url.toString())
+            .then(() => {
+              alert('Share link copied to clipboard!');
+            })
+            .catch(err => {
+              // Fallback for browsers that don't support clipboard API
+              const tempInput = document.createElement('input');
+              tempInput.value = url.toString();
+              document.body.appendChild(tempInput);
+              tempInput.select();
+              document.execCommand('copy');
+              document.body.removeChild(tempInput);
+              alert('Share link copied to clipboard!');
+            });
+        }
+      };
+    }
+  </script>
+</body>
+
+</html>
