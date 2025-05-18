@@ -3,8 +3,8 @@
 
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Voting App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.2">
+  <title>quorum</title>
   <meta name="description" content="A simple voting application">
 
   <link rel="icon" href="/favicon.ico" sizes="any">
@@ -438,25 +438,43 @@
           </p>
         </div>
         <div style="margin-bottom: 15px">
-          <h3>Getting Started with Voting Groups</h3>
+          <h3>Basic Usage</h3>
           <ul style="margin-left: 20px; margin-top: 10px;">
             <li>Click <strong>+ Add Voter</strong> above to add participants to this voting group</li>
             <li>Enter a name and the number of votes they represent</li>
+            <li>Arrange voters by dragging and dropping them in your preferred order</li>
+            <li>Click the <strong>pencil icon</strong> in the header to toggle between edit and voting modes</li>
             <li>Use the colored buttons (Yeah, Present, Nay) to record each voter's position</li>
-            <li>Click the <strong>SAVE</strong> button in the header when you're done editing</li>
             <li>The totals will be displayed at the bottom of the screen</li>
-            <li>You can return to edit mode anytime by clicking the pencil icon</li>
           </ul>
         </div>
-        <h3>Real-time Collaborative Voting</h3>
-        <div style="margin-bottom: 15px">
-          <ul style="margin-left: 20px; margin-top: 10px;">
-            <li>After adding voters, click the <strong>voting session</strong> icon (next to the bookmark icon) to create a voting session</li>
-            <li>Share the generated link with others to allow them to join your voting session</li>
-            <li>All connected peers will see votes in real-time as they are cast</li>
-            <li>Only the session creator can edit voters (add, remove, or modify)</li>
-            <li>The number of connected peers is displayed in the header</li>
-          </ul>
+        <div style="margin-bottom: 15px;">
+          <a href="#" @click.prevent="$data.expandSharing = true" x-show="!$data.expandSharing"
+             style="color: #666; text-decoration: underline; cursor: pointer;">
+            Show Advanced Usage
+          </a>
+
+
+
+          <div x-show="$data.expandSharing" x-cloak style="margin-top: 10px;">
+            <h3>Sharing Voter Configurations</h3>
+            <h4>Copy Configuration </h4>
+            <ul style="margin-left: 20px; margin-top: 10px;margin-bottom: 15px">
+              <li>In edit mode, click the <strong>copy icon</strong> in the header</li>
+              <li>A shareable link will be copied to your clipboard. This link contains encoded information on all of
+                your voter configuration and state.
+              </li>
+              <li>Send this link to others to share a copy of your voter configuration</li>
+            </ul>
+            <h4>Create Voting Session (Real-time)</h4>
+            <ul style="margin-left: 20px; margin-top: 10px;">
+              <li>In voting mode, click the <strong>broadcast icon</strong> in the header</li>
+              <li>Share the generated link with others to start a collaborative voting session</li>
+              <li>All connected peers will see votes in real-time as they are cast</li>
+              <li>Only the session creator can edit voters (add, remove, or modify)</li>
+              <li>The number of connected peers is displayed in the header</li>
+            </ul>
+          </div>
         </div>
       </div>
 
