@@ -16,6 +16,8 @@
 
   <!-- Alpine.js -->
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <!-- PeerJS -->
+  <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
 
   <style>
     :root {
@@ -116,6 +118,17 @@
     .voter-count {
       width: 50px;
       text-align: center;
+    }
+
+    /* Hide up/down arrows for number inputs when not in edit mode */
+    input[type="number"]:read-only::-webkit-inner-spin-button,
+    input[type="number"]:read-only::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    input[type="number"]:read-only {
+      -moz-appearance: textfield;
     }
 
     .voter-name:focus, .voter-count:focus {
@@ -278,25 +291,45 @@
           x-model="groupTitle"
           @keydown.enter="updateGroupTitle()"
           @blur="updateGroupTitle()"
-          @click="if(!editMode) editMode = true"
+          @click="if(!editMode && !isPeer) editMode = true"
           placeholder="Enter Group Title"
+          :readonly="isPeer"
           style="width: 100%; padding: 5px; margin-right: 0px;"
-          :style="editMode ? 'outline: 2px solid rgba(255, 255, 255, 0.5); border-radius: var(--border-radius); width: 100%; padding: 5px; margin-right: -120px;' : 'width: 100%; padding: 5px; margin-right: 0px;'"
+          :style="editMode ? 'outline: 2px solid rgba(255, 255, 255, 0.5); border-radius: var(--border-radius); width: 100%; padding: 5px; margin-right: -180px;' : 'width: 100%; padding: 5px; margin-right: 0px;'"
         />
+
+        <span x-show="connectedPeers.length > 0" style="position: absolute; right: 180px; font-size: 0.8rem; color: white;">
+          <span x-text="connectedPeers.length + ' peer' + (connectedPeers.length > 1 ? 's' : '') + ' connected'"></span>
+        </span>
 
         <button
           @click="generateShareLink()"
           title="Share Configuration"
-          style="background: none; display:none; border: none; color: white; cursor: pointer; font-size: 1.2rem; padding: 5px; position: relative; z-index: 20; min-width: 60px;"
-          x-show="editMode && voters.length > 0"
+          style="background: none; border: none; color: white; cursor: pointer; font-size: 1.2rem; padding: 5px; position: relative; z-index: 40; min-width: 60px;"
+          x-show="editMode && voters.length > 0 && !isPeer"
         >
+          <span style="right:-40px; position:relative; color: white; display: inline-block; width: 16px; height: 16px; border-radius: 2px; position: relative; top: 2px;">
+            <svg version="1.1" fill="#fff" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 115.77 122.88" style="enable-background:new 0 0 115.77 122.88" xml:space="preserve">
+              <path style="fill-rule:evenodd;clip-rule:evenodd;" d="M89.62,13.96v7.73h12.19h0.01v0.02c3.85,0.01,7.34,1.57,9.86,4.1c2.5,2.51,4.06,5.98,4.07,9.82h0.02v0.02 v73.27v0.01h-0.02c-0.01,3.84-1.57,7.33-4.1,9.86c-2.51,2.5-5.98,4.06-9.82,4.07v0.02h-0.02h-61.7H40.1v-0.02 c-3.84-0.01-7.34-1.57-9.86-4.1c-2.5-2.51-4.06-5.98-4.07-9.82h-0.02v-0.02V92.51H13.96h-0.01v-0.02c-3.84-0.01-7.34-1.57-9.86-4.1 c-2.5-2.51-4.06-5.98-4.07-9.82H0v-0.02V13.96v-0.01h0.02c0.01-3.85,1.58-7.34,4.1-9.86c2.51-2.5,5.98-4.06,9.82-4.07V0h0.02h61.7 h0.01v0.02c3.85,0.01,7.34,1.57,9.86,4.1c2.5,2.51,4.06,5.98,4.07,9.82h0.02V13.96L89.62,13.96z M79.04,21.69v-7.73v-0.02h0.02 c0-0.91-0.39-1.75-1.01-2.37c-0.61-0.61-1.46-1-2.37-1v0.02h-0.01h-61.7h-0.02v-0.02c-0.91,0-1.75,0.39-2.37,1.01 c-0.61,0.61-1,1.46-1,2.37h0.02v0.01v64.59v0.02h-0.02c0,0.91,0.39,1.75,1.01,2.37c0.61,0.61,1.46,1,2.37,1v-0.02h0.01h12.19V35.65 v-0.01h0.02c0.01-3.85,1.58-7.34,4.1-9.86c2.51-2.5,5.98-4.06,9.82-4.07v-0.02h0.02H79.04L79.04,21.69z M105.18,108.92V35.65v-0.02 h0.02c0-0.91-0.39-1.75-1.01-2.37c-0.61-0.61-1.46-1-2.37-1v0.02h-0.01h-61.7h-0.02v-0.02c-0.91,0-1.75,0.39-2.37,1.01 c-0.61,0.61-1,1.46-1,2.37h0.02v0.01v73.27v0.02h-0.02c0,0.91,0.39,1.75,1.01,2.37c0.61,0.61,1.46,1,2.37,1v-0.02h0.01h61.7h0.02 v0.02c0.91,0,1.75-0.39,2.37-1.01c0.61-0.61,1-1.46,1-2.37h-0.02V108.92L105.18,108.92z"/>
+            </svg>
+          </span>
+        </button>
 
+        <button
+          @click="generateVoteLink()"
+          title="Create Voting Session"
+          style="background: none; border: none; color: white; cursor: pointer; font-size: 1.2rem; padding: 5px; padding-right: 40px; position: relative; z-index: 30; min-width: 60px;"
+          x-show="!editMode && voters.length > 0 && !isPeer"
+        >
           <span style="color: white; display: inline-block; width: 16px; height: 16px; border-radius: 2px; position: relative; top: 2px;">
-            <svg fill="#fff" height="20px" width="20px" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-                 viewBox="0 0 212.045 212.045" xml:space="preserve">
-            <path d="M167.871,0H44.84C34.82,0,26.022,8.243,26.022,18v182c0,3.266,0.909,5.988,2.374,8.091c1.752,2.514,4.573,3.955,7.598,3.954
-              c2.86,0,5.905-1.273,8.717-3.675l55.044-46.735c1.7-1.452,4.142-2.284,6.681-2.284c2.538,0,4.975,0.832,6.68,2.288l54.86,46.724
-              c2.822,2.409,5.657,3.683,8.512,3.683c4.828,0,9.534-3.724,9.534-12.045V18C186.022,8.243,177.891,0,167.871,0z"/>
+            <svg fill="#fff" height="20px" width="20px" version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+              <path d="M24.57,76.69a4.88,4.88,0,0,1-7.32,6.47C5.68,70.08-.23,56.19,0,42.07.24,28.32,6.29,14.62,
+              18.61,1.54a4.9,4.9,0,0,1,7.13,6.71C15.16,19.48,10,31,9.78,42.23c-.2,11.59,4.88,23.25,14.79,34.46ZM65.9,53v65.36a4.54,
+              4.54,0,0,1-9.08,0V53a11.52,11.52,0,1,1,9.08,0ZM87.65,67.17A4.89,4.89,0,0,1,80.06,61c4.89-6,7.43-12.37,
+              7.45-18.67s-2.37-12.45-7.32-18.52a4.89,4.89,0,1,1,7.59-6.17c6.43,7.88,9.52,16.27,9.5,24.69,0,8.61-3.32,17.06-9.63,
+              24.84ZM42.66,61a4.89,4.89,0,0,1-7.59,6.17c-6.31-7.78-9.6-16.23-9.63-24.84,0-8.42,3.07-16.81,9.51-24.69a4.89,4.89,0,
+              1,1,7.58,6.17c-5,6.07-7.33,12.36-7.32,18.52S37.78,55,42.66,61Zm62.81,22.16a4.88,4.88,0,0,1-7.32-6.47c9.92-11.21,15-22.87,
+              14.79-34.46-.19-11.28-5.38-22.75-16-34a4.9,4.9,0,1,1,7.13-6.71c12.32,13.08,18.37,26.78,18.6,40.53.24,14.12-5.67,28-17.24,41.09Z"/>
             </svg>
           </span>
         </button>
@@ -305,9 +338,17 @@
           @click="toggleEditMode()"
           title="Toggle Edit Mode"
           style="background: none; border: none; color: white; cursor: pointer; font-size: 1.2rem; padding: 5px; position: relative; z-index: 20; min-width: 60px; margin-left:-10px; margin-right: 10px;"
-          x-show="!editMode || (editMode && voters.length > 0)"
+          x-show="(!editMode && !isPeer) || (editMode && voters.length > 0 && !isPeer)"
         >
-          <span style="color: white;" x-text="editMode ? '  SAVE  ' : '✎'"></span>
+          <!--<span style="color: white;" x-text="editMode ? '  SAVE  ' : '✎'"></span>-->
+
+          <svg x-show="!editMode" fill="#fff" width="20px" height="20px" viewBox="4 4 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 25 4.03125 C 24.234375 4.03125 23.484375 4.328125 22.90625 4.90625 L 13 14.78125 L 12.78125 15 L 12.71875 15.3125 L 12.03125 18.8125 L 11.71875 20.28125 L 13.1875 19.96875 L 16.6875 19.28125 L 17 19.21875 L 17.21875 19 L 27.09375 9.09375 C 28.246094 7.941406 28.246094 6.058594 27.09375 4.90625 C 26.515625 4.328125 25.765625 4.03125 25 4.03125 Z M 25 5.96875 C 25.234375 5.96875 25.464844 6.089844 25.6875 6.3125 C 26.132813 6.757813 26.132813 7.242188 25.6875 7.6875 L 16 17.375 L 14.28125 17.71875 L 14.625 16 L 24.3125 6.3125 C 24.535156 6.089844 24.765625 5.96875 25 5.96875 Z M 4 8 L 4 28 L 24 28 L 24 14.8125 L 22 16.8125 L 22 26 L 6 26 L 6 10 L 15.1875 10 L 17.1875 8 Z"/>
+          </svg>
+
+          <svg style="right:-56px;top:3px;position:relative;display:none" x-show="editMode" fill="#fff" width="20px" height="20px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path id="accept" style="fill-rule: evenodd;" d="M1008,120a12,12,0,1,1,12-12A12,12,0,0,1,1008,120Zm0-22a10,10,0,1,0,10,10A10,10,0,0,0,1008,98Zm-0.08,14.333a0.819,0.819,0,0,1-.22.391,0.892,0.892,0,0,1-.72.259,0.913,0.913,0,0,1-.94-0.655l-2.82-2.818a0.9,0.9,0,0,1,1.27-1.271l2.18,2.184,4.46-7.907a1,1,0,0,1,1.38-.385,1.051,1.051,0,0,1,.36,1.417Z" transform="translate(-996 -96)"/>
+          </svg>
         </button>
 
       </div>
@@ -384,23 +425,39 @@
         </template>
       </div>
 
-      <button class="add-voter" @click="addVoter()" x-show="editMode" style="display:none">+ Add Voter</button>
+      <button class="add-voter" @click="addVoter()" x-show="editMode && !isPeer">+ Add Voter</button>
 
       <!-- Tutorial text for empty voting groups -->
-      <div x-show="editMode && voters.length === 0" style="display:none; margin-top: 20px; color: #666; background-color: #f5f5f5; padding: 15px; border-radius: var(--border-radius);">
-        <h3>Voting App!</h3>
+      <div x-show="editMode && voters.length === 0 && !isPeer" style="margin-top: 20px; color: #666; background-color: #f5f5f5; padding: 15px; border-radius: var(--border-radius);">
+        <h3>Welcome to Quorum!</h3>
         <div style="margin-bottom: 15px;">
-          <p>Welcome to the Voting App! This simple tool helps you manage and track votes for any group decision-making process. Whether you're conducting a homeowner association meeting, a club election, or any other voting scenario, this app makes it easy to record and tally votes in real-time.</p>
+          <p>
+            This simple tool helps you manage and track votes for any group decision-making process.
+            Whether you're conducting a homeowner association meeting, a club election, or any other voting scenario,
+            this app makes it easy to record and tally votes in real-time.
+          </p>
         </div>
-        <h3>Getting Started with Voting Groups</h3>
-        <ul style="margin-left: 20px; margin-top: 10px;">
-          <li>Click <strong>+ Add Voter</strong> above to add participants to this voting group</li>
-          <li>Enter a name and the number of votes they represent</li>
-          <li>Use the colored buttons (Yeah, Present, Nay) to record each voter's position</li>
-          <li>Click the <strong>SAVE</strong> button in the header when you're done editing</li>
-          <li>The totals will be displayed at the bottom of the screen</li>
-          <li>You can return to edit mode anytime by clicking the pencil icon</li>
-        </ul>
+        <div style="margin-bottom: 15px">
+          <h3>Getting Started with Voting Groups</h3>
+          <ul style="margin-left: 20px; margin-top: 10px;">
+            <li>Click <strong>+ Add Voter</strong> above to add participants to this voting group</li>
+            <li>Enter a name and the number of votes they represent</li>
+            <li>Use the colored buttons (Yeah, Present, Nay) to record each voter's position</li>
+            <li>Click the <strong>SAVE</strong> button in the header when you're done editing</li>
+            <li>The totals will be displayed at the bottom of the screen</li>
+            <li>You can return to edit mode anytime by clicking the pencil icon</li>
+          </ul>
+        </div>
+        <h3>Real-time Collaborative Voting</h3>
+        <div style="margin-bottom: 15px">
+          <ul style="margin-left: 20px; margin-top: 10px;">
+            <li>After adding voters, click the <strong>voting session</strong> icon (next to the bookmark icon) to create a voting session</li>
+            <li>Share the generated link with others to allow them to join your voting session</li>
+            <li>All connected peers will see votes in real-time as they are cast</li>
+            <li>Only the session creator can edit voters (add, remove, or modify)</li>
+            <li>The number of connected peers is displayed in the header</li>
+          </ul>
+        </div>
       </div>
 
 
@@ -421,8 +478,8 @@
         >×</button>
         <small style="font-size: 0.66rem; color: #666; flex: 1; text-align: left; line-height: 1.1; display: inline-block; align-items: center; margin-bottom:15px">
           This web app is free and will stay free!<br/>
-          If you enjoy using them, consider supporting me with a small donation.<br/>
-          Your support keeps these apps running and enables me to create more! <br/>
+          If you enjoy using it, consider supporting me with a small donation.<br/>
+          Your support keeps apps like these running and enables me to create more! <br/>
         </small>
         <a href="https://buymeacoffee.com/holzschneider" target="_blank"
            style="display: inline-block; background-color: #FFDD00; color: #000000; padding: 8px 15px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-left: 20px; white-space: nowrap; position: relative; top: -10px;">
@@ -456,11 +513,53 @@
         showCoffeeBanner: true, // Control visibility of the coffee banner
         draggedIndex: null, // Track which voter is being dragged
 
+        // WebRTC properties
+        peer: null,
+        peerId: null,
+        isPeer: false, // Whether this instance is a peer (not the master)
+        masterId: null, // ID of the master peer
+        connectedPeers: [], // List of connected peers
+        connections: {}, // Map of peer connections
+        lastUpdateTime: Date.now(), // Timestamp for last update
+
         initApp() {
-          // Get group from URL parameter
+          // Get parameters from URL
           const urlParams = new URLSearchParams(window.location.search);
           const groupParam = urlParams.get('group');
           const configParam = urlParams.get('config');
+          const peerParam = urlParams.get('peer');
+          const votingParam = urlParams.get('voting');
+
+          // Initialize previousGroupTitle to prevent unnecessary updates
+          this.previousGroupTitle = this.groupTitle;
+
+          // Check if this is a voting peer connection
+          if (votingParam) {
+            try {
+              // Decode the voting configuration
+              const votingConfig = JSON.parse(atob(votingParam));
+
+              // Set up as a peer
+              this.isPeer = true;
+              this.editMode = false;
+              this.groupTitle = votingConfig.groupTitle || 'Voting Session';
+              // Update previousGroupTitle to match
+              this.previousGroupTitle = this.groupTitle;
+              this.masterId = votingConfig.masterId;
+
+              // Initialize peer connection
+              this.initPeer(true);
+
+              // Update the URL to remove the voting parameter
+              const url = new URL(window.location);
+              url.searchParams.delete('voting');
+              window.history.pushState({}, '', url);
+
+              return;
+            } catch (e) {
+              console.error('Failed to parse voting configuration', e);
+            }
+          }
 
           // Check if there's a shared configuration in the URL
           if (configParam) {
@@ -474,6 +573,8 @@
               } else {
                 this.groupTitle = 'Shared Voting Group';
               }
+              // Update previousGroupTitle to match
+              this.previousGroupTitle = this.groupTitle;
 
               // Set the voters
               if (decodedConfig.voters) {
@@ -500,11 +601,244 @@
             // Normal initialization
             this.normalInit(groupParam);
           }
+
+          // Initialize peer if not a peer
+          if (!this.isPeer) {
+            this.initPeer(false);
+          }
+        },
+
+        // Initialize PeerJS connection
+        initPeer(isPeer) {
+          // Generate a random ID for this peer
+          const randomId = Math.random().toString(36).substring(2, 10);
+
+          // Create a new Peer instance
+          this.peer = new Peer(randomId, {
+            debug: 2
+          });
+
+          // Store the peer ID when connected
+          this.peer.on('open', (id) => {
+            console.log('My peer ID is: ' + id);
+            this.peerId = id;
+
+            // If this is a peer, connect to the master
+            if (isPeer && this.masterId) {
+              this.connectToMaster();
+            }
+          });
+
+          // Handle incoming connections
+          this.peer.on('connection', (conn) => {
+            this.handleConnection(conn);
+          });
+
+          // Handle errors
+          this.peer.on('error', (err) => {
+            console.error('Peer connection error:', err);
+            alert('Connection error: ' + err.message);
+          });
+
+          // Set up periodic check for connected peers (every 2 seconds)
+          if (!isPeer) {
+            setInterval(() => {
+              // This will trigger a UI update for the connected peers indicator
+              if (this.connectedPeers.length > 0) {
+                // Force Alpine.js to recognize the change by creating a new array
+                this.connectedPeers = [...this.connectedPeers];
+              }
+            }, 2000);
+          }
+        },
+
+        // Connect to the master peer
+        connectToMaster() {
+          if (!this.masterId || !this.peer) return;
+
+          // Create a connection to the master
+          const conn = this.peer.connect(this.masterId);
+
+          conn.on('open', () => {
+            console.log('Connected to master');
+
+            // Add to connections
+            this.connections[this.masterId] = conn;
+
+            // Request initial data
+            conn.send({
+              type: 'requestData',
+              peerId: this.peerId
+            });
+          });
+
+          // Handle data from master
+          conn.on('data', (data) => {
+            this.handlePeerData(data);
+          });
+
+          // Handle connection close
+          conn.on('close', () => {
+            console.log('Disconnected from master');
+            delete this.connections[this.masterId];
+          });
+        },
+
+        // Handle incoming connection
+        handleConnection(conn) {
+          console.log('New peer connected: ' + conn.peer);
+
+          // Add to connected peers list
+          if (!this.connectedPeers.includes(conn.peer)) {
+            this.connectedPeers.push(conn.peer);
+          }
+
+          // Store the connection
+          this.connections[conn.peer] = conn;
+
+          // Handle data from the peer
+          conn.on('data', (data) => {
+            this.handlePeerData(data);
+          });
+
+          // Handle connection close
+          conn.on('close', () => {
+            console.log('Peer disconnected: ' + conn.peer);
+
+            // Remove from connected peers list
+            const index = this.connectedPeers.indexOf(conn.peer);
+            if (index !== -1) {
+              this.connectedPeers.splice(index, 1);
+            }
+
+            // Remove from connections
+            delete this.connections[conn.peer];
+          });
+        },
+
+        // Handle data received from peers
+        handlePeerData(data) {
+          console.log('Received data:', data);
+
+          switch (data.type) {
+            case 'requestData':
+              // Send current state to the requesting peer
+              this.sendToPeer(data.peerId, {
+                type: 'fullUpdate',
+                groupTitle: this.groupTitle,
+                voters: this.voters,
+                timestamp: Date.now()
+              });
+              break;
+
+            case 'fullUpdate':
+              // Update the entire state
+              if (data.timestamp > this.lastUpdateTime) {
+                this.groupTitle = data.groupTitle;
+                // Update previousGroupTitle to match
+                this.previousGroupTitle = this.groupTitle;
+                this.voters = data.voters;
+                this.lastUpdateTime = data.timestamp;
+              }
+              break;
+
+            case 'voterUpdate':
+              // Update a specific voter
+              if (data.timestamp > this.lastUpdateTime) {
+                if (data.index < this.voters.length) {
+                  this.voters[data.index] = data.voter;
+                  this.lastUpdateTime = data.timestamp;
+                }
+              }
+              break;
+
+            case 'addVoter':
+              // Add a new voter
+              if (data.timestamp > this.lastUpdateTime) {
+                this.voters.push(data.voter);
+                this.lastUpdateTime = data.timestamp;
+              }
+              break;
+
+            case 'removeVoter':
+              // Remove a voter
+              if (data.timestamp > this.lastUpdateTime) {
+                if (data.index < this.voters.length) {
+                  this.voters.splice(data.index, 1);
+                  this.lastUpdateTime = data.timestamp;
+                }
+                this.lastUpdateTime = data.timestamp;
+              }
+              break;
+
+            case 'updateTitle':
+              // Update the group title
+              if (data.timestamp > this.lastUpdateTime) {
+                this.groupTitle = data.groupTitle;
+                // Update previousGroupTitle to match
+                this.previousGroupTitle = this.groupTitle;
+                this.lastUpdateTime = data.timestamp;
+              }
+              break;
+          }
+        },
+
+        // Send data to a specific peer
+        sendToPeer(peerId, data) {
+          if (this.connections[peerId]) {
+            this.connections[peerId].send(data);
+          }
+        },
+
+        // Broadcast data to all connected peers
+        broadcast(data) {
+          for (const peerId of this.connectedPeers) {
+            this.sendToPeer(peerId, data);
+          }
+        },
+
+        // Generate a voting link
+        generateVoteLink() {
+          if (!this.peerId) {
+            alert('Peer connection not ready. Please try again in a moment.');
+            return;
+          }
+
+          // Create a voting configuration
+          const votingConfig = {
+            groupTitle: this.groupTitle,
+            masterId: this.peerId
+          };
+
+          // Encode the configuration
+          const encodedConfig = btoa(JSON.stringify(votingConfig));
+
+          // Create a URL with the encoded configuration
+          const url = new URL(window.location);
+          url.searchParams.set('voting', encodedConfig);
+
+          // Copy the URL to the clipboard
+          navigator.clipboard.writeText(url.toString())
+            .then(() => {
+              alert('Voting link copied to clipboard! Share this link with others to start a voting session.');
+            })
+            .catch(err => {
+              // Fallback for browsers that don't support clipboard API
+              const tempInput = document.createElement('input');
+              tempInput.value = url.toString();
+              document.body.appendChild(tempInput);
+              tempInput.select();
+              document.execCommand('copy');
+              document.body.removeChild(tempInput);
+              alert('Voting link copied to clipboard! Share this link with others to start a voting session.');
+            });
         },
 
         normalInit(groupParam) {
           if (groupParam) {
             this.groupTitle = decodeURIComponent(groupParam);
+            // Update previousGroupTitle to match
+            this.previousGroupTitle = this.groupTitle;
             this.loadData();
 
             // Check if voters are already configured before setting editMode
@@ -517,39 +851,97 @@
             }
           } else {
             this.groupTitle = 'New Voting Group';
+            // Update previousGroupTitle to match
+            this.previousGroupTitle = this.groupTitle;
             this.updateGroupTitle();
             // If no voting group, default to edit enabled
             this.editMode = true;
           }
         },
 
-        updateGroupTitle() {
-          // Update URL parameter
-          const url = new URL(window.location);
-          url.searchParams.set('group', encodeURIComponent(this.groupTitle));
-          window.history.pushState({}, '', url);
+        // Store the previous title to check for changes
+        previousGroupTitle: '',
 
-          // Load data for this group
-          this.loadData();
+        updateGroupTitle() {
+          // Only update if the title has actually changed
+          if (this.groupTitle !== this.previousGroupTitle) {
+            this.previousGroupTitle = this.groupTitle;
+
+            // Update URL parameter
+            const url = new URL(window.location);
+            url.searchParams.set('group', encodeURIComponent(this.groupTitle));
+            window.history.pushState({}, '', url);
+
+            // Load data for this group
+            this.loadData();
+
+            // Broadcast title update to peers if we're the master
+            if (!this.isPeer && this.connectedPeers.length > 0) {
+              this.broadcast({
+                type: 'updateTitle',
+                groupTitle: this.groupTitle,
+                timestamp: Date.now()
+              });
+            }
+          }
         },
 
         addVoter() {
-          this.voters.push({
+          const newVoter = {
             name: '',
             count: 1,
             vote: 'present' // Default vote
-          });
+          };
+
+          this.voters.push(newVoter);
           this.saveData();
+
+          // Broadcast new voter to peers if we're the master
+          if (!this.isPeer && this.connectedPeers.length > 0) {
+            this.broadcast({
+              type: 'addVoter',
+              voter: newVoter,
+              timestamp: Date.now()
+            });
+          }
         },
 
         removeVoter(index) {
           this.voters.splice(index, 1);
           this.saveData();
+
+          // Broadcast voter removal to peers if we're the master
+          if (!this.isPeer && this.connectedPeers.length > 0) {
+            this.broadcast({
+              type: 'removeVoter',
+              index: index,
+              timestamp: Date.now()
+            });
+          }
         },
 
         setVote(index, vote) {
           this.voters[index].vote = vote;
           this.saveData();
+
+          // If we're a peer, send the vote to the master
+          if (this.isPeer && this.masterId) {
+            this.sendToPeer(this.masterId, {
+              type: 'voterUpdate',
+              index: index,
+              voter: this.voters[index],
+              timestamp: Date.now()
+            });
+          } 
+          // If we're the master, broadcast the vote to all peers
+          else if (!this.isPeer && this.connectedPeers.length > 0) {
+            this.broadcast({
+              type: 'voterUpdate',
+              index: index,
+              voter: this.voters[index],
+              timestamp: Date.now()
+            });
+          }
         },
 
         getTotalByVote(voteType) {
@@ -563,6 +955,16 @@
 
           const storageKey = `voting-app-${encodeURIComponent(this.groupTitle)}`;
           localStorage.setItem(storageKey, JSON.stringify(this.voters));
+
+          // If we're the master, broadcast the full update to all peers
+          if (!this.isPeer && this.connectedPeers.length > 0) {
+            this.broadcast({
+              type: 'fullUpdate',
+              groupTitle: this.groupTitle,
+              voters: this.voters,
+              timestamp: Date.now()
+            });
+          }
         },
 
         loadData() {
@@ -585,6 +987,12 @@
         },
 
         toggleEditMode() {
+          // If this is a peer, they should not be able to enter edit mode
+          if (this.isPeer) {
+            this.editMode = false;
+            return;
+          }
+
           // If in edit mode, exit edit mode (Save button clicked)
           // If not in edit mode, enter edit mode
           if (this.editMode) {
