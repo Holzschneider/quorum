@@ -1059,9 +1059,8 @@
           event.dataTransfer.setData('text/plain', index);
 
           // Add a delay to apply the dragging class for visual effect
-          const target = event.currentTarget;
           setTimeout(() => {
-            target.classList.add('dragging');
+            event.target.classList.add('dragging');
           }, 0);
         },
 
@@ -1072,7 +1071,7 @@
           }
 
           // Add visual feedback for the drop target
-          event.currentTarget.classList.add('drag-over');
+          event.target.classList.add('drag-over');
         },
 
         dragEnter(event, index) {
@@ -1081,17 +1080,17 @@
           }
 
           // Add visual feedback for the drop target
-          event.currentTarget.classList.add('drag-over');
+          event.target.classList.add('drag-over');
         },
 
         dragLeave(event) {
           // Remove visual feedback when leaving a potential drop target
-          event.currentTarget.classList.remove('drag-over');
+          event.target.classList.remove('drag-over');
         },
 
         drop(event, index) {
           // Remove visual feedback
-          event.currentTarget.classList.remove('drag-over');
+          event.target.classList.remove('drag-over');
 
           if (this.draggedIndex === null || this.draggedIndex === index) {
             return;
