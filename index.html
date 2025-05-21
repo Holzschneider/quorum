@@ -26,7 +26,7 @@
       --danger-color: #ff4d4f;
       --success-color: #52c41a;
       --neutral-color: #d9d9d9;
-      --selection-color: #ffe4a1;
+      --selection-color: #ffcc66;
       --text-color: #333;
       --light-text: #fff;
       --border-radius: 8px;
@@ -264,9 +264,14 @@
       transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s, background-color 0.25s, color 0.25s;
     }
 
-    .voter-item.constraint {
+    .voter-item.selected {
       background-color: var(--selection-color);
       color: var(--text-color);
+    }
+
+    .voter-item.disabled {
+      opacity: 0.5;
+      pointer-events: none;
     }
 
     .totals.selection-active {
@@ -280,8 +285,11 @@
 
     .totals.selection-active .total-value {
       background-color: white;
-      padding: 2px 6px;
-      border-radius: 4px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      min-width: 40px;
+      display: inline-block;
+      text-align: center;
     }
 
     /* Only show grab cursor in edit mode */
@@ -330,7 +338,7 @@
           :style="editMode ? 'outline: 2px solid rgba(255, 255, 255, 0.5); border-radius: var(--border-radius); width: 100%; padding: 5px; margin-right: -180px;' : 'width: 100%; padding: 5px; margin-right: 0px;'"
         />
 
-        <span x-show="connectedPeers.length > 0" style="position: absolute; right: 180px; font-size: 0.8rem; color: white;">
+        <span x-show="connectedPeers.length > 0 && selectedVoters.length === 0" style="position: absolute; right: 180px; font-size: 0.8rem; color: white;">
           <span x-text="connectedPeers.length + ' peer' + (connectedPeers.length > 1 ? 's' : '') + ' connected'"></span>
         </span>
 
@@ -346,6 +354,8 @@
             </svg>
           </span>
         </button>
+
+        <span x-show="selectedVoters.length > 0" style="color: white; margin-left: 5px; padding-right: 10px; font-size: 1rem; white-space: nowrap;" x-text="'' + selectedVoters.map(i => voters[i].name || ('Voter ' + (i + 1))).join(', ')"></span>
 
         <button
           @click="generateVoteLink()"
@@ -365,7 +375,6 @@
             </svg>
           </span>
         </button>
-        <span x-show="selectedVoters.length > 0" style="color: white; margin-left: 5px; font-size: 0.8rem; white-space: nowrap;" x-text="selectedVoters.map(i => voters[i].name || ('Voter ' + (i + 1))).join(', ')"></span>
 
         <button
           @click="toggleEditMode()"
@@ -399,7 +408,7 @@
                @drop.prevent="editMode && drop($event, index)"
                @dragend="editMode && dragEnd($event)"
                @click.stop="handleVoterClick($event, index)"
-               :class="{ 'dragging': draggedIndex === index, 'constraint': (selectedVoters.includes(index) && !isPeer) || (isPeer && allowedVoters && !allowedVoters.includes(index)) }"
+               :class="{ 'dragging': draggedIndex === index, 'selected': selectedVoters.includes(index) && !isPeer, 'disabled': isPeer && allowedVoters && !allowedVoters.includes(index) }"
           >
             <div class="voter-info">
               <input
@@ -428,21 +437,21 @@
             <div class="vote-options">
               <button
                 class="vote-option yeah"
-                :class="{ 'inactive': voter.vote !== 'yeah' }"
+                :class="{ 'inactive': voter.vote !== 'yeah' || (isPeer && allowedVoters && !allowedVoters.includes(index)) }"
                 @click="setVote(index, 'yeah')"
               >
                 Yeah
               </button>
               <button
                 class="vote-option present"
-                :class="{ 'inactive': voter.vote !== 'present' }"
+                :class="{ 'inactive': voter.vote !== 'present' || (isPeer && allowedVoters && !allowedVoters.includes(index)) }"
                 @click="setVote(index, 'present')"
               >
                 Present
               </button>
               <button
                 class="vote-option nay"
-                :class="{ 'inactive': voter.vote !== 'nay' }"
+                :class="{ 'inactive': voter.vote !== 'nay' || (isPeer && allowedVoters && !allowedVoters.includes(index)) }"
                 @click="setVote(index, 'nay')"
               >
                 Nay
