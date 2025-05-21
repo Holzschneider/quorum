@@ -80,6 +80,92 @@
       border-radius: var(--border-radius);
     }
 
+    .group-selector {
+      position: relative;
+      width: 100%;
+    }
+
+    .dropdown-toggle {
+      position: absolute;
+      left: 5px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      width: 16px;
+      text-align: center;
+      transition: transform 0.2s;
+      color: #fff;
+    }
+
+    .dropdown-toggle.inactive {
+      opacity: 0.4;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    .dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      color: black;
+      border: 1px solid #ccc;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      z-index: 50;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .dropdown-item {
+      padding: 8px 10px;
+      cursor: pointer;
+      border-bottom: 1px solid #eee;
+      display: grid;
+      grid-template-columns: 150px 1fr auto;
+      column-gap: 30px;
+      align-items: center;
+    }
+
+    .dropdown-item.selected {
+      background: #eee;
+    }
+
+    .dropdown-item:last-child {
+      border-bottom: none;
+    }
+
+    .dropdown-title {
+      font-weight: bold;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .dropdown-names {
+      font-size: 0.9rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .dropdown-time {
+      font-size: 0.8rem;
+      color: #666;
+      white-space: nowrap;
+      text-align: right;
+    }
+
+    .autocomplete-hint {
+      position: absolute;
+      left: 20px;
+      top: 5px;
+      color: rgba(255, 255, 255, 0.5);
+      pointer-events: none;
+      white-space: pre;
+    }
+
     .voter-list {
       margin-top: 20px;
     }
@@ -325,27 +411,48 @@
   <div x-data="votingApp()" x-init="initApp()" @click.self="clearSelection()">
     <header>
       <div style="display: flex; align-items: center; position: relative;">
-        <input
-          type="text"
-          class="group-title"
-          x-model="groupTitle"
-          @keydown.enter="updateGroupTitle()"
-          @blur="updateGroupTitle()"
-          
-          placeholder="Enter Group Title"
-          :readonly="isPeer"
-          style="width: 100%; padding: 5px; margin-right: 0px;"
-          :style="editMode ? 'outline: 2px solid rgba(255, 255, 255, 0.5); border-radius: var(--border-radius); width: 100%; padding: 5px; margin-right: -180px;' : 'width: 100%; padding: 5px; margin-right: 0px;'"
-        />
+        <div class="group-selector" style="flex:1;">
+          <span
+            class="dropdown-toggle"
+            :class="{ inactive: groupList.length <= 1 }"
+            @click="groupList.length > 1 && toggleGroupList()"
+            :style="groupListOpen ? 'transform: translateY(-50%) rotate(90deg);' : 'transform: translateY(-50%);'">
+            ▶
+          </span>
+          <span class="autocomplete-hint"><span style="visibility:hidden" x-text="groupTitle"></span><span x-text="autoCompleteHint"></span></span>
+          <input
+            type="text"
+            class="group-title"
+            x-model="groupTitle"
+            @keydown.enter="updateGroupTitle()"
+            @blur="updateGroupTitle()"
+            @input="updateAutoComplete()"
+            @keydown.tab.prevent="applyAutoComplete()"
+            placeholder="Enter Group Title"
+            :readonly="isPeer"
+            style="width: 100%; padding: 5px 5px 5px 26px; margin-right: 0px;"
+            :style="editMode ? 'outline: 2px solid rgba(255, 255, 255, 0.5); border-radius: var(--border-radius); width: 100%; padding: 5px 5px 5px 26px; margin-right: -200px;' : 'width: 100%; padding: 5px 5px 5px 26px; margin-right: 0px;'"
+          />
+          <div class="dropdown" x-show="groupListOpen" @click.outside="groupListOpen=false">
+            <template x-for="(g, i) in groupList.slice(0,7)" :key="g.title">
+              <div @click="loadGroup(g.title)" class="dropdown-item" :class="{selected: g.title===groupTitle}">
+                <span class="dropdown-title" x-text="g.title"></span>
+                <span class="dropdown-names" x-text="g.voterNames"></span>
+                <span class="dropdown-time" x-text="formatTimestamp(g.lastOpened)"></span>
+              </div>
+            </template>
+            <div x-show="groupList.length>7" @click="showAllGroups=true" class="dropdown-item" style="font-style:italic; text-align:center;">show all voting groups</div>
+          </div>
+        </div>
 
-        <span x-show="connectedPeers.length > 0 && selectedVoters.length === 0" style="position: absolute; right: 180px; font-size: 0.8rem; color: white;">
+        <span x-show="connectedPeers.length > 0 && selectedVoters.length === 0" style="position: absolute; right: 200px; font-size: 0.8rem; color: white;">
           <span x-text="connectedPeers.length + ' peer' + (connectedPeers.length > 1 ? 's' : '') + ' connected'"></span>
         </span>
 
         <button
           @click="generateShareLink()"
           title="Share Configuration"
-          style="background: none; border: none; color: white; cursor: pointer; font-size: 1.2rem; padding: 5px; position: relative; z-index: 40; min-width: 60px;"
+          style="background: none; border: none; color: white; cursor: pointer; font-size: 1.2rem; padding: 5px; position: relative; z-index: 40; min-width: 60px; margin-left: 5px;"
           x-show="editMode && voters.length > 0 && !isPeer"
         >
           <span style="right:-40px; position:relative; color: white; display: inline-block; width: 16px; height: 16px; border-radius: 2px; position: relative; top: 2px;">
@@ -379,7 +486,7 @@
         <button
           @click="toggleEditMode()"
           title="Toggle Edit Mode"
-          style="background: none; border: none; color: white; cursor: pointer; font-size: 1.2rem; padding: 5px; position: relative; z-index: 20; min-width: 60px; margin-left:-10px; margin-right: 10px;"
+          style="background: none; border: none; color: white; cursor: pointer; font-size: 1.2rem; padding: 5px; position: relative; z-index: 20; min-width: 60px; margin-left:-10px; margin-right: 15px;"
           x-show="(!editMode && !isPeer) || (editMode && voters.length > 0 && !isPeer)"
         >
           <!--<span style="color: white;" x-text="editMode ? '  SAVE  ' : '✎'"></span>-->
@@ -395,6 +502,18 @@
 
       </div>
     </header>
+
+    <div class="group-overlay" x-show="showAllGroups" style="position:fixed; inset:0; background:white; overflow:auto; z-index:60; padding:20px;">
+      <h2>Voting Groups</h2>
+      <template x-for="g in groupList" :key="g.title">
+        <div @click="loadGroup(g.title)" style="padding:10px; border-bottom:1px solid #eee; cursor:pointer;">
+          <div style="font-weight:bold;" x-text="g.title"></div>
+          <div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" x-text="g.voterNames"></div>
+          <div style="color:#666;" x-text="formatTimestamp(g.lastEdited)"></div>
+        </div>
+      </template>
+      <button @click="showAllGroups=false" style="margin-top:20px;">Close</button>
+    </div>
 
     <div class="container">
       <div class="voter-list" @click.self="clearSelection()">
@@ -578,6 +697,11 @@
         selectedVoters: [], // Selected voters for link generation
         allowedVoters: null, // Voting restriction when joining via link
 
+        groupList: [],
+        groupListOpen: false,
+        showAllGroups: false,
+        autoCompleteHint: '',
+
         // WebRTC properties
         peer: null,
         peerId: null,
@@ -594,6 +718,8 @@
           const configParam = urlParams.get('config');
           const peerParam = urlParams.get('peer');
           const votingParam = urlParams.get('voting');
+
+          this.loadGroupList();
 
           // Initialize previousGroupTitle to prevent unnecessary updates
           this.previousGroupTitle = this.groupTitle;
@@ -675,6 +801,8 @@
 
          // Set up keyboard shortcuts
          this.initHotkeys();
+
+         this.updateAutoComplete();
        },
 
         // Initialize PeerJS connection
@@ -956,10 +1084,13 @@
               if (oldKey !== newKey) {
                 localStorage.removeItem(oldKey);
               }
+              this.renameGroupInList(oldTitle, this.groupTitle);
             } else {
               // When not editing, load the selected group
               this.loadData();
             }
+
+            this.updateAutoComplete();
 
             // Broadcast title update to peers if we're the master
             if (!this.isPeer && this.connectedPeers.length > 0) {
@@ -1097,6 +1228,8 @@
           const storageKey = `voting-app-${encodeURIComponent(this.groupTitle)}`;
           localStorage.setItem(storageKey, JSON.stringify(this.voters));
 
+          this.updateGroupListEntry(this.groupTitle);
+
           // If we're the master, broadcast the full update to all peers
           if (!this.isPeer && this.connectedPeers.length > 0) {
             this.broadcast({
@@ -1125,6 +1258,102 @@
             // No saved data for this group
             this.voters = [];
           }
+        },
+
+       loadGroupList() {
+         const data = localStorage.getItem('voting-app-groups');
+          this.groupList = data ? JSON.parse(data) : [];
+          this.groupList.forEach(g => { if (g.lastOpened === undefined) g.lastOpened = g.lastEdited || Date.now(); });
+          this.groupList.sort((a,b) => b.lastEdited - a.lastEdited);
+       },
+
+        saveGroupList() {
+          localStorage.setItem('voting-app-groups', JSON.stringify(this.groupList));
+        },
+
+        updateGroupListEntry(title) {
+          if (!title) return;
+          const now = Date.now();
+          const names = this.voters.map(v => v.name).filter(n => n).join(', ');
+          let entry = this.groupList.find(g => g.title === title);
+          if (entry) {
+            entry.lastEdited = now;
+            entry.voterNames = names;
+          } else {
+            entry = { title, lastEdited: now, lastOpened: now, voterNames: names };
+            this.groupList.push(entry);
+          }
+          this.groupList.sort((a,b) => b.lastEdited - a.lastEdited);
+          this.saveGroupList();
+        },
+
+        renameGroupInList(oldTitle, newTitle) {
+          if (!oldTitle || !newTitle) return;
+          let entry = this.groupList.find(g => g.title === oldTitle);
+          if (entry) {
+            entry.title = newTitle;
+            entry.lastEdited = Date.now();
+            entry.voterNames = this.voters.map(v => v.name).filter(Boolean).join(', ');
+          } else {
+            entry = { title: newTitle, lastEdited: Date.now(), lastOpened: Date.now(), voterNames: this.voters.map(v => v.name).filter(Boolean).join(', ') };
+            this.groupList.push(entry);
+          }
+          this.groupList.sort((a,b) => b.lastEdited - a.lastEdited);
+          this.saveGroupList();
+        },
+
+       loadGroup(title) {
+         this.groupTitle = title;
+         this.previousGroupTitle = title;
+         this.loadData();
+         this.groupListOpen = false;
+         this.showAllGroups = false;
+          this.updateAutoComplete();
+
+          const entry = this.groupList.find(g => g.title === title);
+          if (entry) {
+            entry.lastOpened = Date.now();
+            this.saveGroupList();
+          }
+       },
+
+        toggleGroupList() {
+          this.groupListOpen = !this.groupListOpen;
+        },
+
+        updateAutoComplete() {
+          if (!this.groupTitle) {
+            this.autoCompleteHint = '';
+            return;
+          }
+          const match = this.groupList.find(g => g.title.toLowerCase().startsWith(this.groupTitle.toLowerCase()) && g.title.toLowerCase() !== this.groupTitle.toLowerCase());
+          if (match) {
+            this.autoCompleteHint = match.title.slice(this.groupTitle.length);
+          } else {
+            this.autoCompleteHint = '';
+          }
+        },
+
+        applyAutoComplete() {
+          if (this.autoCompleteHint) {
+            this.groupTitle = this.groupTitle + this.autoCompleteHint;
+            this.autoCompleteHint = '';
+          }
+        },
+
+        formatTimestamp(ts) {
+          if (!ts) return '';
+          const d = new Date(ts);
+          const now = new Date();
+          const day = d.getDate();
+          const suffix = (day % 10 === 1 && day % 100 !== 11) ? 'st'
+                        : (day % 10 === 2 && day % 100 !== 12) ? 'nd'
+                        : (day % 10 === 3 && day % 100 !== 13) ? 'rd'
+                        : 'th';
+          const month = d.toLocaleString('en-US', { month: 'long' });
+          const yearPart = d.getFullYear() === now.getFullYear() ? '' : ' ' + d.getFullYear();
+          const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+          return `${month}, ${day}${suffix}${yearPart} ${time}`;
         },
 
         toggleEditMode() {
