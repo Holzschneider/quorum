@@ -331,7 +331,7 @@
           x-model="groupTitle"
           @keydown.enter="updateGroupTitle()"
           @blur="updateGroupTitle()"
-          @click="if(!editMode && !isPeer) editMode = true"
+          
           placeholder="Enter Group Title"
           :readonly="isPeer"
           style="width: 100%; padding: 5px; margin-right: 0px;"
@@ -939,6 +939,7 @@
         updateGroupTitle() {
           // Only update if the title has actually changed
           if (this.groupTitle !== this.previousGroupTitle) {
+            const oldTitle = this.previousGroupTitle;
             this.previousGroupTitle = this.groupTitle;
 
             // Update URL parameter
@@ -946,8 +947,19 @@
             url.searchParams.set('group', encodeURIComponent(this.groupTitle));
             window.history.pushState({}, '', url);
 
-            // Load data for this group
-            this.loadData();
+            const oldKey = `voting-app-${encodeURIComponent(oldTitle)}`;
+            const newKey = `voting-app-${encodeURIComponent(this.groupTitle)}`;
+
+            if (this.editMode) {
+              // Rename localStorage entry when editing
+              localStorage.setItem(newKey, JSON.stringify(this.voters));
+              if (oldKey !== newKey) {
+                localStorage.removeItem(oldKey);
+              }
+            } else {
+              // When not editing, load the selected group
+              this.loadData();
+            }
 
             // Broadcast title update to peers if we're the master
             if (!this.isPeer && this.connectedPeers.length > 0) {
