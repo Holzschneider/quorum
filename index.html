@@ -322,7 +322,7 @@
 </head>
 
 <body>
-  <div x-data="votingApp()" x-init="initApp()" @click="clearSelection()">
+  <div x-data="votingApp()" x-init="initApp()" @click.self="clearSelection()">
     <header>
       <div style="display: flex; align-items: center; position: relative;">
         <input
@@ -397,7 +397,7 @@
     </header>
 
     <div class="container">
-      <div class="voter-list">
+      <div class="voter-list" @click.self="clearSelection()">
         <template x-for="(voter, index) in voters" :key="index">
           <div class="voter-item"
                :draggable="editMode"
@@ -668,11 +668,14 @@
             this.normalInit(groupParam);
           }
 
-          // Initialize peer if not a peer
-          if (!this.isPeer) {
-            this.initPeer(false);
-          }
-        },
+         // Initialize peer if not a peer
+         if (!this.isPeer) {
+           this.initPeer(false);
+         }
+
+         // Set up keyboard shortcuts
+         this.initHotkeys();
+       },
 
         // Initialize PeerJS connection
         initPeer(isPeer) {
@@ -1001,9 +1004,34 @@
           }
         },
 
-        clearSelection() {
-          this.selectedVoters = [];
-        },
+       clearSelection() {
+         this.selectedVoters = [];
+       },
+
+       selectAllVoters() {
+         this.selectedVoters = this.voters.map((_, i) => i);
+       },
+
+       invertSelection() {
+         const all = this.voters.map((_, i) => i);
+         this.selectedVoters = all.filter(i => !this.selectedVoters.includes(i));
+       },
+
+       initHotkeys() {
+         window.addEventListener('keydown', (e) => {
+           if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+           if (e.metaKey || e.ctrlKey) {
+             const key = e.key.toLowerCase();
+             if (key === 'a') {
+               e.preventDefault();
+               this.selectAllVoters();
+             } else if (key === 'i') {
+               e.preventDefault();
+               this.invertSelection();
+             }
+           }
+         });
+       },
 
         showCounts() {
           return this.voters.some(v => v.count !== 1);

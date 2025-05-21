@@ -28,6 +28,12 @@ A simple, client-side web application for managing and tracking votes in real-ti
 5. **Record Votes**: Click the colored buttons (Yeah, Present, Nay) to record each voter's position
 6. **View Results**: See vote totals at the bottom of the screen
 
+### Keyboard Shortcuts
+
+- **Cmd/Ctrl + A**: Select all voters
+- **Cmd/Ctrl + I**: Invert current selection
+- **Click on empty canvas**: Deselect all
+
 ### Sharing Options
 
 #### Share Configuration (Static)
