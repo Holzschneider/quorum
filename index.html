@@ -415,7 +415,7 @@
             :style="editMode ? 'outline: 2px solid rgba(255, 255, 255, 0.5); border-radius: var(--border-radius); width: 100%; padding: 5px; margin-right: -200px;' : 'width: 100%; padding: 5px; margin-right: 0px;'"
           />
           <div class="dropdown" x-show="groupListOpen" @click.outside="groupListOpen=false">
-            <template x-for="(g, i) in groupList" :key="g.title">
+            <template x-for="(g, i) in groupList" :key="g.title + '-' + i">
               <div @click="loadGroup(g.title)" class="dropdown-item" :class="{selected: g.title===groupTitle}">
                 <span class="dropdown-title"  x-text="g.title"></span>
                 <span class="dropdown-names" x-text="g.voterNames"></span>
@@ -1245,13 +1245,26 @@
        loadGroupList() {
          const data = localStorage.getItem(`${APP_PREFIX}-groups`);
           this.groupList = data ? JSON.parse(data) : [];
-          this.groupList.forEach(g => { if (g.lastOpened === undefined) g.lastOpened = g.lastEdited || Date.now(); });
-          this.groupList.sort((a,b) => b.lastEdited - a.lastEdited);
+          this.cleanGroupList();
+          this.saveGroupList();
        },
 
-        saveGroupList() {
-          localStorage.setItem(`${APP_PREFIX}-groups`, JSON.stringify(this.groupList));
-        },
+       saveGroupList() {
+         localStorage.setItem(`${APP_PREFIX}-groups`, JSON.stringify(this.groupList));
+       },
+
+       cleanGroupList() {
+         const map = new Map();
+         for (const g of this.groupList) {
+           if (!g || !g.title) continue;
+           const existing = map.get(g.title);
+           if (!existing || (g.lastEdited || 0) > (existing.lastEdited || 0)) {
+             if (g.lastOpened === undefined) g.lastOpened = g.lastEdited || Date.now();
+             map.set(g.title, g);
+           }
+         }
+         this.groupList = Array.from(map.values()).sort((a,b) => b.lastEdited - a.lastEdited);
+       },
 
         updateGroupListEntry(title) {
           if (!title) return;
@@ -1265,7 +1278,7 @@
             entry = { title, lastEdited: now, lastOpened: now, voterNames: names };
             this.groupList.push(entry);
           }
-          this.groupList.sort((a,b) => b.lastEdited - a.lastEdited);
+          this.cleanGroupList();
           this.saveGroupList();
         },
 
@@ -1280,7 +1293,7 @@
             entry = { title: newTitle, lastEdited: Date.now(), lastOpened: Date.now(), voterNames: this.voters.map(v => v.name).filter(Boolean).join(', ') };
             this.groupList.push(entry);
           }
-          this.groupList.sort((a,b) => b.lastEdited - a.lastEdited);
+          this.cleanGroupList();
           this.saveGroupList();
         },
 
@@ -1351,6 +1364,8 @@
             this.editMode = false;
           } else {
             this.editMode = true;
+            // Clear selections when switching to edit mode
+            this.clearSelection();
           }
         },
 
